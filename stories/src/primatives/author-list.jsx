@@ -26,6 +26,7 @@ const Wrapper = styled.div`
 
 const DropZone = styled.div`
   display: flex;
+  flex-wrap: wrap;
 
   /*
     Needed to avoid growth in list due to lifting the first item
@@ -62,33 +63,110 @@ type Props = {|
   listType?: string,
   internalScroll?: boolean,
   isCombineEnabled?: boolean,
+  draggingIndex?: Number,
 |};
+
+class AuthorWrapper extends Component {
+  constructor(props, context) {
+    super(props, context);
+    this.state = {
+      dragProvided: null,
+    };
+  }
+
+  static getDerivedStateFromProps(props, state) {
+    return {
+      ...state,
+      dragProvided: props.dragProvided,
+    };
+  }
+
+  // componentDidMount() {
+  //   this.updateTransition();
+  // }
+
+  // componentDidUpdate() {
+  //   this.updateTransition();
+  // }
+
+  updateTransition() {
+    setTimeout(() => {
+      if (this.state.dragProvided) {
+        this.setState({
+          dragProvided: (this.state.dragProvided.draggableProps.style = {
+            ...this.state.dragProvided.draggableProps.style,
+            transform: null,
+            transition: null,
+          }),
+        });
+      }
+    }, 160);
+  }
+
+  render() {
+    const { quote, dragProvided, dragSnapshot } = this.props;
+    return (
+      <Author
+        author={quote.author}
+        provided={dragProvided}
+        snapshot={dragSnapshot}
+        quote={quote}
+      />
+    );
+  }
+}
 
 export default class AuthorList extends Component<Props> {
   static defaultProps = {
     isCombineEnabled: false,
   };
   renderBoard = (dropProvided: DroppableProvided) => {
-    const { quotes } = this.props;
+    const { quotes, draggingIndex } = this.props;
+
+    const quotesWithoutPlaceholder = quotes.filter(
+      (q) => q.id !== 'placeholder',
+    );
 
     return (
       <Container>
         <DropZone ref={dropProvided.innerRef}>
-          {quotes.map((quote: Quote, index: number) => (
-            <Draggable key={quote.id} draggableId={quote.id} index={index}>
-              {(
-                dragProvided: DraggableProvided,
-                dragSnapshot: DraggableStateSnapshot,
-              ) => (
-                <Author
-                  author={quote.author}
-                  provided={dragProvided}
-                  snapshot={dragSnapshot}
-                />
-              )}
-            </Draggable>
-          ))}
-          {dropProvided.placeholder}
+          {quotes.map((quote: Quote) => {
+            const index = quotesWithoutPlaceholder.findIndex(
+              (a) => a === quote,
+            );
+            return quote.id === 'placeholder' ? (
+              <div key={quote.id}>{dropProvided.placeholder}</div>
+            ) : (
+              <Draggable key={quote.id} draggableId={quote.id} index={index}>
+                {(
+                  dragProvided: DraggableProvided,
+                  dragSnapshot: DraggableStateSnapshot,
+                ) => {
+                  if (draggingIndex !== index) {
+                    const {
+                      transform,
+                      ...rest
+                    } = dragProvided.draggableProps.style;
+                    dragProvided.draggableProps.style = rest;
+                    // dragProvided.draggableProps.style = {
+                    //   ...dragProvided.draggableProps.style,
+                    //   transform: 'translate3d(0px, 0px, 0px)',
+                    //   transition: 'transform 150ms ease 0s',
+                    // };
+                    // console.log(dragProvided.draggableProps.style);
+                  }
+
+                  return (
+                    <AuthorWrapper
+                      dragProvided={dragProvided}
+                      dragSnapshot={dragSnapshot}
+                      quote={quote}
+                    />
+                  );
+                }}
+              </Draggable>
+            );
+          })}
         </DropZone>
       </Container>
     );

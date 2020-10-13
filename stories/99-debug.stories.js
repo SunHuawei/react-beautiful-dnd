@@ -1,11 +1,13 @@
 // @flow
 import React from 'react';
 import { storiesOf } from '@storybook/react';
+import { slidesOnDeck, sections } from './slidesOnDeckMockData';
+import Deck from './Deck';
 // import { Draggable, Droppable, DragDropContext } from '../src';
 
 class App extends React.Component<*> {
   render() {
-    return 'Used for debugging codesandbox examples (copy paste them into this file)';
+    return <Deck slidesOnDeck={slidesOnDeck} sections={sections} />;
   }
 }
 
